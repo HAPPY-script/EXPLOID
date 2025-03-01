@@ -1,0 +1,130 @@
+local player = game.Players.LocalPlayer
+local userInputService = game:GetService("UserInputService")
+local runService = game:GetService("RunService")
+
+-- Giao diện GUI
+local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+local toggleFrame = Instance.new("Frame", gui)
+toggleFrame.Size = UDim2.new(0, 400, 0, 300)
+toggleFrame.Position = UDim2.new(0.3, 0, 0.3, 0)
+toggleFrame.BackgroundColor3 = Color3.fromRGB(40, 0, 60)
+toggleFrame.BorderSizePixel = 2
+toggleFrame.BorderColor3 = Color3.fromRGB(200, 0, 255)
+toggleFrame.Visible = true
+toggleFrame.Active = true
+
+local hideButton = Instance.new("TextButton", toggleFrame)
+hideButton.Size = UDim2.new(0.1, 0, 0.1, 0)
+hideButton.Position = UDim2.new(-0.1, 0, 0, 0)
+hideButton.BackgroundColor3 = Color3.fromRGB(100, 0, 150)
+hideButton.Text = "-"
+hideButton.TextColor3 = Color3.new(1, 1, 1)
+
+local hiddenFrame = Instance.new("Frame", gui)
+hiddenFrame.Size = UDim2.new(0, 40, 0, 40)
+hiddenFrame.Position = UDim2.new(0.3, 0, 0.3, 0)
+hiddenFrame.BackgroundColor3 = Color3.fromRGB(100, 0, 150)
+hiddenFrame.Visible = false
+hiddenFrame.Active = true
+hiddenFrame.ZIndex = 2
+
+local showButton = Instance.new("TextButton", hiddenFrame)
+showButton.Size = UDim2.new(1, 0, 1, 0)
+showButton.Text = "+"
+showButton.TextColor3 = Color3.new(1, 1, 1)
+showButton.BackgroundColor3 = Color3.fromRGB(100, 0, 150)
+
+local codeInput = Instance.new("TextBox", toggleFrame)
+codeInput.Size = UDim2.new(1, -20, 0.7, 0)
+codeInput.Position = UDim2.new(0, 10, 0, 10)
+codeInput.BackgroundColor3 = Color3.fromRGB(30, 0, 50)
+codeInput.TextColor3 = Color3.new(1, 1, 1)
+codeInput.MultiLine = true
+codeInput.ClearTextOnFocus = false
+codeInput.TextWrapped = true
+codeInput.Text = "-- Nhập code ở đây"
+codeInput.TextScaled = false
+codeInput.Font = Enum.Font.SourceSansBold
+codeInput.TextXAlignment = Enum.TextXAlignment.Left
+codeInput.TextYAlignment = Enum.TextYAlignment.Top
+codeInput.PlaceholderText = "Nhập mã code..."
+codeInput.TextSize = 24
+
+local executeButton = Instance.new("TextButton", toggleFrame)
+executeButton.Size = UDim2.new(0.5, -10, 0.15, 0)
+executeButton.Position = UDim2.new(0, 10, 0.75, 0)
+executeButton.BackgroundColor3 = Color3.fromRGB(60, 0, 100)
+executeButton.Text = "Execute"
+executeButton.TextColor3 = Color3.new(1, 1, 1)
+executeButton.Font = Enum.Font.SourceSansBold
+executeButton.TextSize = 18
+
+local clearButton = Instance.new("TextButton", toggleFrame)
+clearButton.Size = UDim2.new(0.5, -10, 0.15, 0)
+clearButton.Position = UDim2.new(0.5, 10, 0.75, 0)
+clearButton.BackgroundColor3 = Color3.fromRGB(100, 0, 150)
+clearButton.Text = "Clear"
+clearButton.TextColor3 = Color3.new(1, 1, 1)
+clearButton.Font = Enum.Font.SourceSansBold
+clearButton.TextSize = 18
+
+local function executeCode()
+    local success, result = pcall(loadstring(codeInput.Text))
+    if not success then
+        warn("Lỗi: ", result)
+    end
+end
+
+local function clearCode()
+    codeInput.Text = ""
+end
+
+executeButton.MouseButton1Click:Connect(executeCode)
+clearButton.MouseButton1Click:Connect(clearCode)
+
+hideButton.MouseButton1Click:Connect(function()
+    toggleFrame.Visible = false
+    hiddenFrame.Visible = true
+end)
+
+showButton.MouseButton1Click:Connect(function()
+    toggleFrame.Visible = true
+    hiddenFrame.Visible = false
+end)
+
+local dragging
+local dragInput
+local dragStart
+local startPos
+
+local function makeDraggable(frame)
+    frame.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            dragStart = input.Position
+            startPos = frame.Position
+
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                end
+            end)
+        end
+    end)
+
+    frame.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement then
+            dragInput = input
+        end
+    end)
+
+    userInputService.InputChanged:Connect(function(input)
+        if dragging and input == dragInput then
+            local delta = input.Position - dragStart
+            frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+    end)
+end
+
+makeDraggable(toggleFrame)
+makeDraggable(hiddenFrame)
